@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aspire Path書類審査システム — ユーザー管理">
+  <title>Aspire Path — ユーザー管理</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="aspire-path-logo.png">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-logo">
+        <a href="admin.html" style="display:flex; align-items:center;">
+          <img src="aspire-path-logo.png" alt="Aspire Path" style="height:30px;width:auto;object-fit:contain;">
+        </a>
+        <span class="app-logo__subtitle">ユーザー管理</span>
+      </div>
+      <div class="header-actions">
+        <div id="portalSwitchContainer"></div>
+        <div class="user-info">
+          <div class="user-info__avatar" id="adminAvatar">A</div>
+          <span id="adminName">管理者</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="logoutBtn">ログアウト</button>
+      </div>
+    </header>
+
+    <main class="page-wrapper page-wrapper--wide">
+      <!-- Breadcrumbs / Back navigation -->
+      <div class="mb-lg">
+        <a href="admin.html" class="btn btn--secondary btn--sm">
+          <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          管理者ダッシュボードに戻る
+        </a>
+      </div>
+
+      <div class="section__header">
+        <h1 class="section__title">ユーザー権限管理</h1>
+        <button class="btn btn--secondary btn--sm" id="refreshBtn">🔄 更新</button>
+      </div>
+
+      <div class="card">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ユーザー名</th>
+                <th>メールアドレス</th>
+                <th>現在の権限</th>
+                <th>作成日</th>
+                <th>管理者権限の変更</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <!-- JSで動的に追加 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module" src="js/admin-users.js"></script>
+</body>
+</html>

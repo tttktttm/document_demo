@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aspire Path書類審査システム — 管理者ダッシュボード">
+  <title>Aspire Path — 管理者ダッシュボード</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="aspire-path-logo.png">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-logo">
+        <img src="aspire-path-logo.png" alt="Aspire Path" style="height:30px;width:auto;object-fit:contain;">
+        <span class="app-logo__subtitle">管理者ダッシュボード</span>
+      </div>
+      <div class="header-actions">
+        <div id="portalSwitchContainer"></div>
+        <div class="user-info">
+          <div class="user-info__avatar" id="adminAvatar">A</div>
+          <span id="adminName">管理者</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="logoutBtn">ログアウト</button>
+      </div>
+    </header>
+
+    <main class="page-wrapper page-wrapper--wide">
+
+      <!-- Loading -->
+      <div id="loadingState" class="loading-overlay">
+        <div class="spinner spinner--lg"></div>
+        <span>データを読み込み中...</span>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div id="dashboardContent" class="hidden">
+
+        <!-- Page Title -->
+        <div class="section__header">
+          <h1 class="section__title">応募者管理</h1>
+          <div style="display:flex; gap:12px;">
+            <a href="admin-users.html" class="btn btn--ghost btn--sm">👥 ユーザー管理</a>
+            <button class="btn btn--secondary btn--sm" id="exportDataBtn">📥 全データ出力 (CSV)</button>
+            <button class="btn btn--secondary btn--sm" id="refreshBtn">🔄 更新</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row" id="statsRow">
+          <div class="stat-card">
+            <div class="stat-card__value" id="statTotal">0</div>
+            <div class="stat-card__label">全応募者</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__value" id="statSubmitted">0</div>
+            <div class="stat-card__label">両方提出済</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__value" id="statInterview">0</div>
+            <div class="stat-card__label">面接対象</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__value" id="statAccepted">0</div>
+            <div class="stat-card__label">採用</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div>
+            <div class="filter-bar__label">提出状況</div>
+            <select class="form-select" id="filterSubmission">
+              <option value="all">すべて</option>
+              <option value="both_submitted">両方提出済</option>
+              <option value="partial">一部提出</option>
+              <option value="not_started">未提出</option>
+            </select>
+          </div>
+          <div>
+            <div class="filter-bar__label">審査ステータス</div>
+            <select class="form-select" id="filterStatus">
+              <option value="all">すべて</option>
+              <option value="pending">審査前</option>
+              <option value="under_review">審査中</option>
+              <option value="interview">面接対象</option>
+              <option value="accepted">採用</option>
+              <option value="rejected">不採用</option>
+            </select>
+          </div>
+          <div>
+            <div class="filter-bar__label">履修判定</div>
+            <select class="form-select" id="filterReqCheck">
+              <option value="all">すべて</option>
+              <option value="pass">OK</option>
+              <option value="fail">NG</option>
+              <option value="none">未判定</option>
+            </select>
+          </div>
+          <div>
+            <div class="filter-bar__label">志望キャンパス</div>
+            <select class="form-select" id="filterCampus">
+              <option value="all">すべて</option>
+              <option value="ucb">UC Berkeley</option>
+              <option value="ucla">UCLA</option>
+              <option value="ucsd">UC San Diego</option>
+              <option value="uci">UC Irvine</option>
+              <option value="ucd">UC Davis</option>
+              <option value="ucsb">UC Santa Barbara</option>
+              <option value="ucsc">UC Santa Cruz</option>
+              <option value="ucr">UC Riverside</option>
+              <option value="ucm">UC Merced</option>
+            </select>
+          </div>
+          <div>
+            <div class="filter-bar__label">非表示の応募者</div>
+            <div class="flex items-center gap-sm mt-sm">
+              <input type="checkbox" id="filterShowHidden" style="width:16px;height:16px;cursor:pointer;">
+              <label for="filterShowHidden" style="font-size:13px;cursor:pointer;user-select:none;font-weight:600;">非表示者も表示</label>
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div class="filter-bar__label">キーワード検索 (名前/メール)</div>
+            <input type="text" class="form-input" id="searchInput" placeholder="検索...">
+          </div>
+        </div>
+
+        <!-- Applicant Table -->
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="name">応募者情報</th>
+                <th>第一志望 / TAG</th>
+                <th>履修状況</th>
+                <th>エッセイ等</th>
+                <th class="sortable" data-sort="gpa">GPA</th>
+                <th>判定</th>
+                <th>審査ステータス</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="applicantTableBody">
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="empty-state hidden">
+          <div class="empty-state__icon">📭</div>
+          <div class="empty-state__text">該当する応募者が見つかりません</div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/data.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

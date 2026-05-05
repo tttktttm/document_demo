@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aspire Path書類審査システム — 応募者マイページ">
+  <title>Aspire Path — マイページ</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="aspire-path-logo.png">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header" id="appHeader">
+      <div class="app-logo">
+        <img src="aspire-path-logo.png" alt="Aspire Path" style="height:30px;width:auto;object-fit:contain;">
+        <span class="app-logo__subtitle">書類審査システム</span>
+      </div>
+      <div class="header-actions">
+        <div id="portalSwitchContainer"></div>
+        <div class="user-info">
+          <div class="user-info__avatar" id="userAvatar">?</div>
+          <span id="userName">ユーザー</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="logoutBtn">ログアウト</button>
+      </div>
+    </header>
+
+    <main class="page-wrapper">
+
+      <!-- Loading State -->
+      <div id="loadingState" class="loading-overlay">
+        <div class="spinner spinner--lg"></div>
+        <span>データを読み込み中...</span>
+      </div>
+
+      <!-- ======================== -->
+      <!-- Profile Section (STEP 0) -->
+      <!-- ======================== -->
+      <div id="profileSection" class="section hidden">
+        <div class="section__header">
+          <button class="section__back" id="profileBackBtn">← ダッシュボードに戻る</button>
+          <h2 class="section__title">0. プロフィールの設定</h2>
+        </div>
+
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg">基本情報の確認</h3>
+          <div class="detail-grid">
+            <div class="form-group">
+              <label class="form-group__label form-group__label--required" for="profileNameKanji">お名前（漢字）</label>
+              <input type="text" class="form-input" id="profileNameKanji" placeholder="山田 太郎">
+            </div>
+            <div class="form-group">
+              <label class="form-group__label form-group__label--required" for="profileNameEn">お名前（アルファベット）</label>
+              <input type="text" class="form-input" id="profileNameEn" placeholder="Taro Yamada">
+            </div>
+            <div class="form-group">
+              <label class="form-group__label form-group__label--required" for="profileCollege">現在（または直近）のカレッジ</label>
+              <select class="form-select" id="profileCollege">
+                <option value="">選択してください</option>
+              </select>
+              <input type="text" class="form-input mt-sm hidden" id="profileCollegeOther" placeholder="カレッジ名を手入力してください">
+            </div>
+            <div class="form-group">
+              <label class="form-group__label form-group__label--required" for="profileAdmissionTerm">カレッジ入学時期</label>
+              <input type="text" class="form-input" id="profileAdmissionTerm" placeholder="例: Fall 2023">
+            </div>
+            <div class="form-group">
+              <label class="form-group__label form-group__label--required" for="profileGraduationTerm">カレッジ卒業（編入準備完了）予定時期</label>
+              <input type="text" class="form-input" id="profileGraduationTerm" placeholder="例: Spring 2025">
+            </div>
+          </div>
+
+          <div class="form-actions mt-xl">
+            <button class="btn btn--primary btn--full" id="profileSaveBtn">プロフィールを保存する</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- Dashboard Section -->
+      <!-- ======================== -->
+      <div id="dashboardSection" class="section hidden">
+        <!-- Active Alerts (Requested Corrections) -->
+        <div id="dashboardAlert" class="alert alert--danger hidden mb-lg" style="border-width: 2px; animation: slideUp 0.4s ease;">
+          <div class="alert__icon">⚠️</div>
+          <div>
+            <div style="font-weight:700; font-size:16px;">提出内容の修正が必要です</div>
+            <p style="margin-top:4px;">管理者より修正依頼が届いています。各セクションの通知メッセージを確認し、再提出を行ってください。</p>
+          </div>
+        </div>
+
+        <div class="section__header">
+          <div>
+            <h1 class="section__title" id="dashboardTitle">マイページ</h1>
+            <p class="text-muted mt-sm" id="dashboardSubtitle">提出物の入力・管理を行います。両方の提出が完了すると審査が開始されます。</p>
+          </div>
+        </div>
+
+        <!-- Accepted Portal Panel -->
+        <div id="acceptedPortalPanel" class="hidden mb-xl">
+          <div class="card" style="border: 2px solid var(--accent-start); background: linear-gradient(135deg, rgba(230,240,255,0.4) 0%, rgba(240,230,255,0.4) 100%);">
+            <h2 class="card__title" style="color: var(--color-primary); font-size: 24px; margin-bottom: 8px;">🎉 採用おめでとうございます！</h2>
+            <p class="text-muted mb-lg">エッセイサポート採用者専用のポータルへようこそ。ここではエッセイの進捗報告や出願状況の管理を行うことができます。これまでに提出した書類は画面下部から確認可能です。</p>
+            
+            <div class="detail-grid mt-lg">
+              <!-- Essay URL -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-group__label">📝 エッセイドキュメント (Google Docs)</label>
+                <div id="acceptedEssayUrlContainer" class="p-sm mt-sm" style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md);">
+                  <span id="acceptedEssayUrlText" class="text-muted">管理者がURLを設定するまでお待ちください。</span>
+                </div>
+              </div>
+
+              <!-- Essay Progress -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-group__label">📊 エッセイ進捗報告</label>
+                <div class="form-group__hint mb-sm">各ステップの完成数を選択して保存してください。</div>
+                <div class="flex gap-md flex-wrap" style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 16px;">
+                  <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">下書き</label>
+                    <select id="acceptedProgressDraft" class="form-select">
+                      <option value="0">0 / 4</option><option value="1">1 / 4</option><option value="2">2 / 4</option><option value="3">3 / 4</option><option value="4">4 / 4</option>
+                    </select>
+                  </div>
+                  <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">日本語完成</label>
+                    <select id="acceptedProgressJa" class="form-select">
+                      <option value="0">0 / 4</option><option value="1">1 / 4</option><option value="2">2 / 4</option><option value="3">3 / 4</option><option value="4">4 / 4</option>
+                    </select>
+                  </div>
+                  <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">英語完成</label>
+                    <select id="acceptedProgressEn" class="form-select">
+                      <option value="0">0 / 4</option><option value="1">1 / 4</option><option value="2">2 / 4</option><option value="3">3 / 4</option><option value="4">4 / 4</option>
+                    </select>
+                  </div>
+                  <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 8px;">
+                    <button class="btn btn--secondary btn--sm" id="acceptedProgressSaveBtn">進捗を保存</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Application Complete Report -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-group__label">🎓 出願完了報告</label>
+                <div class="form-group__hint mb-sm">出願が完了した大学にチェックを入れてください。TAGを提出した場合は選択してください。</div>
+                <div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 16px;">
+                  <div id="acceptedUnivList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                    <!-- Checkboxes injected by JS -->
+                  </div>
+                  <div style="border-top: 1px dashed var(--border-default); padding-top: 16px;">
+                    <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">TAG提出大学</label>
+                    <select id="acceptedTagUniv" class="form-select" style="max-width: 300px;">
+                      <option value="">TAG提出なし（または未定）</option>
+                      <!-- Options injected by JS -->
+                    </select>
+                  </div>
+                  <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 16px;">
+                    <button class="btn btn--primary btn--sm" id="acceptedUnivSaveBtn">出願状況を保存</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Overview -->
+        <div class="card mb-xl">
+          <div class="progress-label">
+            <span>全体の進捗</span>
+            <span id="overallProgressText">0 / 4 完了</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar__fill" id="overallProgressBar" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard-grid">
+          <!-- Card 0: Profile Setting -->
+          <div class="dashboard-card" id="cardProfile" tabindex="0" role="button" aria-label="プロフィールの設定">
+            <div class="dashboard-card__header">
+              <div class="card__icon card__icon--blue">👤</div>
+              <div class="dashboard-card__content">
+                <div class="dashboard-card__label">STEP 0</div>
+                <div class="dashboard-card__title">プロフィールの設定</div>
+              </div>
+            </div>
+            <div class="dashboard-card__desc">氏名、カレッジ、入学・卒業時期などの基本情報を設定します。</div>
+            <div class="mt-md">
+              <span class="status-badge status-badge--not-started" id="profileStatusBadge">
+                未設定
+              </span>
+            </div>
+          </div>
+
+          <!-- Card A: Requirement Check -->
+          <div class="dashboard-card" id="cardRequirement" tabindex="0" role="button" aria-label="クラス履修の確認">
+            <div class="dashboard-card__header">
+              <div class="card__icon card__icon--purple">📚</div>
+              <div class="dashboard-card__content">
+                <div class="dashboard-card__label">STEP A</div>
+                <div class="dashboard-card__title">クラス履修の確認</div>
+              </div>
+            </div>
+            <div class="dashboard-card__desc">志望UC・専攻を選択し、履修済み・予定のクラスと成績を入力します。</div>
+            <div class="mt-md">
+              <span class="status-badge status-badge--not-started" id="reqStatusBadge">
+                未提出
+              </span>
+            </div>
+          </div>
+
+          <div class="dashboard-card" id="cardDocument" tabindex="0" role="button" aria-label="書類提出">
+            <div class="dashboard-card__header">
+              <div class="card__icon card__icon--blue">📝</div>
+              <div class="dashboard-card__content">
+                <div class="dashboard-card__label">STEP B</div>
+                <div class="dashboard-card__title">書類提出</div>
+              </div>
+            </div>
+            <div class="dashboard-card__desc">GPA・課外活動・志望理由・PIQエッセイなどの書類データを入力・提出します。<br><strong style="color:var(--accent-start);">※日本語エッセイを提出してください。</strong></div>
+            <div class="mt-md">
+              <span class="status-badge status-badge--not-started" id="docStatusBadge">
+                未提出
+              </span>
+            </div>
+          </div>
+
+          <!-- Card C: Transcript Upload -->
+          <div class="dashboard-card" id="cardTranscript" tabindex="0" role="button" aria-label="成績表の提出">
+            <div class="dashboard-card__header">
+              <div class="card__icon card__icon--purple">📄</div>
+              <div class="dashboard-card__content">
+                <div class="dashboard-card__label">STEP C</div>
+                <div class="dashboard-card__title">成績表の提出</div>
+              </div>
+            </div>
+            <div class="dashboard-card__desc">非公式成績表（Unofficial Transcript）の共有リンクを提出します。</div>
+            <div class="mt-md">
+              <span class="status-badge status-badge--not-started" id="transcriptStatusBadge">
+                未提出
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overall Status Info -->
+        <div class="card mt-xl" id="statusCard" style="display:none;">
+          <div class="flex items-center justify-between">
+            <div class="detail-item__label">審査ステータス</div>
+            <span class="status-badge" id="overallStatusBadge"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- Requirement Check Section -->
+      <!-- ======================== -->
+      <div id="requirementSection" class="section hidden">
+        <div class="section__header">
+          <button class="section__back" id="reqBackBtn">← ダッシュボードに戻る</button>
+          <h2 class="section__title">A. クラス履修の確認</h2>
+        </div>
+
+        <!-- Admin Correction -->
+        <div id="correctionReq" class="alert alert--warning mb-xl hidden">
+          <div style="font-weight:600; margin-bottom:4px;">⚠️ 管理者からの修正依頼（履修）</div>
+          <div id="correctionReqText" style="font-size:14px;"></div>
+        </div>
+
+        <!-- College/UC/Major Selection -->
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg">基本情報</h3>
+          <div class="detail-grid">
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-group__label form-group__label--required">志望キャンパスと専攻（複数選択可）</label>
+              <div class="form-group__hint mb-sm">出願予定のキャンパスにチェックを入れ、それぞれの志望専攻を選択してください。</div>
+              <div id="reqUCMajorsList" style="display:flex; flex-direction:column; gap:12px; background:var(--bg-card); padding:16px; border-radius:8px; border:1px solid var(--border-default);">
+                <!-- Checkboxes and selects injected by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GE Pattern Selection -->
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg">履修パターンの選択</h3>
+          <div class="form-group">
+            <label class="form-group__label form-group__label--required">適用されるGE（一般教育要件）パターン</label>
+            <div class="form-group__hint mb-md">
+              2025年秋以降にカレッジに入学した方は<strong>CalGETC</strong>が適用されます。<br>
+              2025年夏以前から在籍している方は<strong>IGETC</strong>（旧パターン）を選択可能です。<br>
+              <span style="color:var(--color-error); font-size:12px;">※IGETCを選択する場合、2025年夏以前からカレッジに継続して在籍している必要があります。</span>
+            </div>
+            <div class="flex gap-xl">
+              <label class="checkbox-item" style="padding: 12px 24px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input);">
+                <input type="radio" name="gePattern" value="calgetc" checked style="margin-right: 8px;">
+                <span>CalGETC (新基準)</span>
+              </label>
+              <label class="checkbox-item" style="padding: 12px 24px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input);">
+                <input type="radio" name="gePattern" value="igetc" style="margin-right: 8px;">
+                <span>IGETC (旧基準)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Requirement Checklist -->
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg" id="requirementChecklistTitle">CalGETC 要件</h3>
+          <p class="text-muted mb-lg" style="font-size:13px;" id="requirementChecklistDesc">
+            履修済み、および<strong>編入までにとる予定（In-Progress/Planned）のクラス</strong>もすべて入力してください。<br>
+            <span style="font-size:12px; color:var(--color-primary-light);">（IP: 履修中/予定, P/NP: 合否科目, W: 辞退 等も選択可能です）</span><br>
+            各エリアの必要科目数が埋まっているか自動判定します。
+          </p>
+          <div id="calgetcChecklist"></div>
+        </div>
+
+        <!-- Major Preparation -->
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg">Other Classes / Major Requirements</h3>
+          <p class="text-muted mb-lg" style="font-size:13px;">
+            専攻要件（Major Preparation）として指定されている科目や、その他のクラス情報を入力してください。<br>
+            <strong>※編入までにとる予定のクラスも忘れずに記入してください（IP等）。</strong>
+          </p>
+          <div id="majorPrepList"></div>
+          <button class="btn btn--secondary btn--sm mt-md" id="addMajorPrepBtn" type="button">＋ クラスを追加</button>
+        </div>
+
+        <!-- Auto-check Result -->
+        <div id="reqAutoResult" class="hidden">
+          <!-- Filled dynamically -->
+        </div>
+
+        <!-- Supplement Comment (shown when failing) -->
+        <div id="reqSupplementSection" class="card mb-xl hidden">
+          <h3 class="card__title mb-lg">⚠️ 不足要件に関する補足</h3>
+          <p class="text-muted mb-md" style="font-size:13px;">不足している要件について、今後の履修計画やリカバリー策を記入してください。</p>
+          <div class="form-group">
+            <textarea class="form-textarea" id="reqSupplement" rows="5" placeholder="例：Area 5のBiology系科目は来学期に履修予定です..."></textarea>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button class="btn btn--secondary" id="reqSaveBtn">💾 ドラフト保存</button>
+          <button class="btn btn--primary" id="reqSubmitBtn">📤 提出する</button>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- Document Submission Section -->
+      <!-- ======================== -->
+      <div id="documentSection" class="section hidden">
+        <div class="section__header">
+          <button class="section__back" id="docBackBtn">← ダッシュボードに戻る</button>
+          <h2 class="section__title">B. 書類提出</h2>
+        </div>
+
+        <!-- Admin Correction -->
+        <div id="correctionDoc" class="alert alert--warning mb-xl hidden">
+          <div style="font-weight:600; margin-bottom:4px;">⚠️ 管理者からの修正依頼（書類・エッセイ）</div>
+          <div id="correctionDocText" style="font-size:14px;"></div>
+        </div>
+
+        <!-- Exemption Alert -->
+        <div id="exemptQualitativeAlert" class="alert alert--info mb-xl hidden">
+          <div class="alert__icon">ℹ️</div>
+          <div>
+            <div style="font-weight:700;">定性データの提出免除</div>
+            <p style="font-size:14px; margin-top:4px;">管理者の判断により、このステップの定性データ（志望理由・設問回答・PIQエッセイ）の提出は免除されています。GPAと課外活動のみ入力して提出してください。</p>
+          </div>
+        </div>
+
+        <!-- Quantitative Data -->
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg">定量データ</h3>
+
+          <!-- GPA -->
+          <div class="form-group">
+            <label class="form-group__label form-group__label--required" for="docGPA">GPA</label>
+            <input type="number" class="form-input" id="docGPA" placeholder="例: 3.85" min="0" max="4.0" step="0.01" style="max-width:200px;">
+            <div class="form-group__hint">0.00〜4.00の範囲で入力してください</div>
+          </div>
+
+          <!-- GPA Explanation (dynamic) -->
+          <div id="gpaExplanationSection" class="hidden" style="animation: fadeIn 0.3s ease;">
+            <div class="alert alert--warning mb-md">
+              <span class="alert__icon">⚠️</span>
+              <span>GPAが3.8未満です。理由や今後の挽回策をお聞かせください。</span>
+            </div>
+            <div class="form-group">
+              <label class="form-group__label form-group__label--required" for="docGPAExplanation">GPA補足説明</label>
+              <textarea class="form-textarea" id="docGPAExplanation" rows="4" placeholder="GPAに関する背景や、今後の改善計画を記入してください"></textarea>
+            </div>
+          </div>
+
+          <!-- Target Schools removed as it is now combined in STEP A -->
+
+          <!-- Activities -->
+          <div class="form-group">
+            <label class="form-group__label">課外活動リスト</label>
+            <div class="form-group__hint mb-md">活動名、役割、週あたりの活動時間を入力してください。</div>
+            <div id="activitiesList"></div>
+            <button class="btn btn--secondary btn--sm mt-md" id="addActivityBtn" type="button">＋ 活動を追加</button>
+          </div>
+        </div>
+
+        <!-- Qualitative Data -->
+        <div class="card mb-xl">
+          <h3 class="card__title mb-lg">定性データ</h3>
+
+          <!-- Motivation -->
+          <div class="form-group">
+            <label class="form-group__label form-group__label--required" for="docMotivation">志望理由</label>
+            <div class="form-group__hint mb-sm">なぜAspire Pathのサポートを受けたいのですか？<br><strong style="color:var(--accent-start);">※日本語エッセイを提出してください。</strong></div>
+            <textarea class="form-textarea" id="docMotivation" rows="6" placeholder="Aspire Pathを志望する理由を記入してください"></textarea>
+          </div>
+
+          <!-- Self Analysis -->
+          <div class="form-group">
+            <label class="form-group__label form-group__label--required" for="docSelfAnalysis">設問回答</label>
+            <div class="form-group__hint mb-sm">UC編入に向けて、自分の強みは何だと思いますか。また、現時点で不足している点や課題は何だと考えていますか。<br><strong style="color:var(--accent-start);">※日本語エッセイを提出してください。</strong></div>
+            <textarea class="form-textarea" id="docSelfAnalysis" rows="6" placeholder="自分の強みと課題について記入してください"></textarea>
+          </div>
+
+          <!-- PIQ Essay -->
+          <div class="form-group">
+            <label class="form-group__label form-group__label--required" for="docPIQSelect">PIQエッセイ プロンプトの選択</label>
+            <div class="form-group__hint mb-sm">出願用のPIQ設問（Prompt）を選択してください。</div>
+            <select class="form-select mb-md" id="docPIQSelect">
+              <option value="">PIQの質問を選択してください</option>
+            </select>
+            
+            <div id="piqPromptDisplay" class="alert alert--info mb-md hidden" style="flex-direction:column; gap:8px;">
+              <div style="font-weight:600;font-size:13px;" id="piqPromptJa"></div>
+              <div style="font-size:12px;color:var(--text-secondary);" id="piqPromptEn"></div>
+              
+              <div class="mt-sm pt-sm" style="border-top:1px dashed var(--border-default);">
+                <div style="font-weight:600;font-size:12px;color:var(--color-info);" id="piqConsiderJa"></div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;" id="piqConsiderEn"></div>
+              </div>
+            </div>
+
+            <label class="form-group__label form-group__label--required" for="docPIQ">PIQエッセイ 本文</label>
+            <div class="form-group__hint mb-sm"><strong style="color:var(--accent-start);">※日本語エッセイを提出してください。</strong></div>
+            <textarea class="form-textarea" id="docPIQ" rows="12" placeholder="日本語でのエッセイ本文を記入してください（500〜1000文字）"></textarea>
+            <div class="char-counter" id="piqCounter">
+              <span class="char-counter__current" id="piqWordCount">0 文字</span>
+              <span class="char-counter__limit" id="piqWordLimit"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto-save indicator -->
+        <div class="flex items-center gap-sm mb-md">
+          <span class="text-muted" style="font-size:12px;" id="autoSaveIndicator">自動保存: 無効</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button class="btn btn--secondary" id="docSaveBtn">💾 ドラフト保存</button>
+          <button class="btn btn--primary" id="docSubmitBtn">📤 提出する</button>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- Transcript Upload Section -->
+      <!-- ======================== -->
+      <div id="transcriptSection" class="section hidden">
+        <div class="section__header">
+          <button class="section__back" id="transcriptBackBtn">← ダッシュボードに戻る</button>
+          <h2 class="section__title">C. 成績表の提出</h2>
+        </div>
+
+        <!-- Admin Correction -->
+        <div id="correctionTranscript" class="alert alert--warning mb-xl hidden">
+          <div style="font-weight:600; margin-bottom:4px;">⚠️ 管理者からの修正依頼（成績表）</div>
+          <div id="correctionTranscriptText" style="font-size:14px;"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card__title mb-lg">成績表（共有リンク）の提出</h3>
+          <p class="text-muted mb-lg" style="font-size:13px;">
+            カレッジ発行の非公式成績表（Unofficial Transcript）を <strong>Google Drive や Dropbox 等</strong> にアップロードし、その「共有用リンク」を以下に貼り付けてください。
+          </p>
+
+          <div class="alert alert--info mb-lg">
+            <div style="font-weight:600; font-size:13px; margin-bottom:4px;">💡 Google Driveでの共有方法例</div>
+            <ol style="font-size:12px; padding-left:16px; margin:0;">
+              <li>PDFをGoogle Driveにアップロード</li>
+              <li>ファイルを右クリック > 「共有」 > 「共有」を選択</li>
+              <li>一般的なアクセスを「制限付き」から<strong>「リンクを知っている全員」</strong>に変更</li>
+              <li>「リンクをコピー」を押して、下の欄に貼り付け</li>
+            </ol>
+          </div>
+
+          <div class="form-group">
+            <label class="form-group__label" for="transcriptUrlInput">成績表の共有URL</label>
+            <input type="url" class="form-input" id="transcriptUrlInput" placeholder="https://drive.google.com/file/d/..." style="width:100%;">
+            <div class="form-group__hint">※アクセスの権限が「リンクを知っている全員」になっていることを確認してください。</div>
+          </div>
+
+          <div class="form-actions mt-lg">
+            <button class="btn btn--primary" id="transcriptSubmitBtn">📤 リンクを提出する</button>
+          </div>
+
+          <hr style="border:0; border-top:1px solid var(--border-default); margin:32px 0;">
+
+          <!-- Email Option -->
+          <h3 class="card__title mb-md">その他の提出方法</h3>
+          <p class="text-muted mb-lg" style="font-size:13px;">
+            Google Drive等での共有が難しい場合は、メールで直接送信することも可能です。
+          </p>
+          <div class="alert alert--warning mb-lg">
+              <div style="font-weight:600; font-size:13px; margin-bottom:4px;">📩 メール送信先</div>
+              <div style="font-size:13px;">宛先： <strong>support@aspirepath.demo</strong></div>
+              <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">※件名に「成績表提出：[お名前]」と記載してください。</div>
+          </div>
+          
+          <div id="emailSentSection">
+            <p class="text-muted mb-md" style="font-size:12px;">メールで送信した場合は、以下のボタンを押してください。管理者が確認後、ステータスを「提出済み」にアップデートします。</p>
+            <button class="btn btn--secondary" id="transcriptEmailSentBtn">📧 メールで送信済み</button>
+          </div>
+
+          <!-- Existing Transcript Info -->
+          <div id="existingTranscript" class="hidden mt-xl">
+            <div class="alert alert--success">
+              <span class="alert__icon">✅</span>
+              <div>
+                <strong id="existingStatusLabel">成績表提出済み</strong><br>
+                <div id="existingUrlDisplay" class="hidden">
+                  <a href="#" id="viewTranscriptLink" target="_blank" style="color:inherit; text-decoration:underline; font-size:13px;">提出されたリンクを確認する</a>
+                </div>
+                <div id="existingEmailDisplay" class="hidden" style="font-size:12px;">
+                  現在、管理者がメールでの提出を確認中です。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title" id="confirmTitle">確認</h3>
+        <button class="modal__close" id="confirmClose">✕</button>
+      </div>
+      <p id="confirmMessage" class="text-muted mb-xl"></p>
+      <div class="flex gap-md justify-between">
+        <button class="btn btn--secondary" id="confirmCancel">キャンセル</button>
+        <button class="btn btn--primary" id="confirmOk">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script type="module" src="js/applicant.js"></script>
+</body>
+</html>

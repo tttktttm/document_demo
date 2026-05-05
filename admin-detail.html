@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aspire Path書類審査システム — 応募者詳細">
+  <title>Aspire Path — 応募者詳細</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="aspire-path-logo.png">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-logo">
+        <img src="aspire-path-logo.png" alt="Aspire Path" style="height:30px;width:auto;object-fit:contain;">
+        <span class="app-logo__subtitle">管理者ダッシュボード</span>
+      </div>
+      <div class="header-actions">
+        <div id="portalSwitchContainer"></div>
+        <div class="user-info">
+          <div class="user-info__avatar" id="adminAvatar">A</div>
+          <span id="adminName">管理者</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="logoutBtn">ログアウト</button>
+      </div>
+    </header>
+    <main class="page-wrapper">
+
+      <!-- Breadcrumbs / Back navigation -->
+      <div class="mb-lg">
+        <a href="admin.html" class="btn btn--secondary btn--sm">
+          <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          応募者一覧に戻る
+        </a>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingState" class="loading-overlay">
+        <div class="spinner spinner--lg"></div>
+        <span>データを読み込み中...</span>
+      </div>
+
+      <!-- Detail Content -->
+      <div id="detailContent" class="hidden">
+
+        <!-- Applicant Header -->
+        <div class="card mb-xl">
+          <div class="flex items-center justify-between" style="flex-wrap:wrap;gap:16px;">
+            <div>
+              <h1 class="section__title" id="detailName" style="font-size:22px;">応募者名</h1>
+              <div class="text-muted mt-sm" id="detailEmail">email@example.com</div>
+            </div>
+
+            <!-- Summary Stats Bar -->
+            <div class="flex gap-md" style="background:var(--bg-secondary); padding:12px 20px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+              <div style="border-right:1px solid var(--border-subtle); padding-right:20px;">
+                <div class="detail-item__label" style="margin-bottom:4px;">GPA</div>
+                <div id="summaryGPA" style="font-size:24px; font-weight:800; color:var(--accent-start); font-family:var(--font-mono);">—</div>
+              </div>
+              <div style="padding-left:10px;">
+                <div class="detail-item__label" style="margin-bottom:4px;">最優先希望</div>
+                <div id="summaryTarget" style="font-size:16px; font-weight:700;">—</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-md" style="flex-wrap:wrap;">
+              <div>
+                <div class="detail-item__label">審査ステータス</div>
+                <select class="form-select" id="detailStatus" style="max-width:160px;">
+                  <option value="pending">審査前</option>
+                  <option value="under_review">審査中</option>
+                  <option value="interview">面接対象</option>
+                  <option value="accepted">採用</option>
+                  <option value="rejected">不採用</option>
+                </select>
+              </div>
+              <button class="btn btn--primary btn--sm" id="saveStatusBtn">保存</button>
+              
+              <!-- Exemption Toggle -->
+              <div class="flex items-center gap-sm ml-lg" style="padding: 8px 16px; background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid var(--border-default);">
+                <input type="checkbox" id="exemptQualitative" style="width:18px; height:18px; cursor:pointer;">
+                <label for="exemptQualitative" style="font-size:13px; font-weight:600; cursor:pointer; user-select:none;">Step B 定性データを免除</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submission Status Badges -->
+          <div class="flex gap-lg mt-lg" style="flex-wrap:wrap;">
+            <div>
+              <span class="detail-item__label">履修チェック</span>
+              <span class="status-badge" id="detailReqStatus" style="margin-left:8px;"></span>
+            </div>
+            <div>
+              <span class="detail-item__label">書類提出</span>
+              <span class="status-badge" id="detailDocStatus" style="margin-left:8px;"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav" id="detailTabs">
+          <button class="tab-nav__item tab-nav__item--active" data-tab="tabBasic">基本情報</button>
+          <button class="tab-nav__item" data-tab="tabRequirement">履修状況</button>
+          <button class="tab-nav__item" data-tab="tabDocument">書類・エッセイ</button>
+          <button class="tab-nav__item" data-tab="tabAI">AI判定レポート</button>
+          <button class="tab-nav__item" data-tab="tabAdmin">管理者メモ</button>
+          <button class="tab-nav__item" data-tab="tabAccepted" id="tabAcceptedNav" style="display:none; color:var(--accent-start); font-weight:700;">エッセイサポート採用者管理</button>
+        </div>
+
+        <!-- Tab: Basic Info -->
+        <div class="tab-panel tab-panel--active" id="tabBasic">
+          <div class="card">
+            <h3 class="card__title mb-lg">基本情報</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-item__label">氏名（漢字）</div>
+                <div class="detail-item__value" id="detailNameKanji">—</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-item__label">氏名（英字）</div>
+                <div class="detail-item__value" id="detailNameEn">—</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-item__label">GPA</div>
+                <div class="detail-item__value" id="detailGPA">—</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-item__label">所属カレッジ</div>
+                <div class="detail-item__value" id="detailCollege">—</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-item__label">カレッジ入学時期</div>
+                <div class="detail-item__value" id="detailAdmissionTerm">—</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-item__label">カレッジ卒業予定時期</div>
+                <div class="detail-item__value" id="detailGraduationTerm">—</div>
+              </div>
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-item__label">志望キャンパス・専攻</div>
+                <div class="detail-item__value" id="detailUCMajors">—</div>
+              </div>
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-item__label">履修自動判定</div>
+                <div class="detail-item__value" id="detailAutoCheck">—</div>
+              </div>
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-item__label">非公式成績表 (Transcript)</div>
+                <div class="detail-item__value" id="detailTranscript">
+                  <div id="transcriptAdminDisplay">—</div>
+                  <div id="transcriptAdminActions" class="mt-xs hidden">
+                    <button class="btn btn--secondary btn--sm" id="btnVerifyTranscript">提出済みとして承認</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transcript Feedback -->
+            <div id="btnToggleCorrectionTranscriptContainer" style="margin-top:24px;">
+              <button class="btn btn--secondary btn--sm" id="btnToggleCorrectionTranscript">📝 志願者に修正依頼をする</button>
+            </div>
+            
+            <div id="containerTranscriptCorrection" class="mt-lg p-md hidden" style="border: 1px solid var(--color-warning-border); background: var(--color-warning-bg); border-radius:8px;">
+              <h4 style="color:var(--color-warning); font-size:14px; margin-bottom:8px;">⚠️ 成績表に関する修正依頼</h4>
+              <div class="form-group">
+                <textarea class="form-textarea" id="feedbackTranscript" rows="2" placeholder="成績表のリンク切れや不備に関する連絡事項。"></textarea>
+              </div>
+              <div style="text-align:right; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn--ghost btn--sm" id="btnClearCorrectionTranscript" style="color:var(--text-muted);">クリア</button>
+                <button class="btn btn--secondary btn--sm" id="btnSendFeedbackTranscript">修正依頼を送信</button>
+              </div>
+            </div>
+
+            <!-- GPA Explanation -->
+            <div id="detailGPAExplanation" class="hidden mt-lg">
+              <div class="detail-item__label">GPA補足説明</div>
+              <div class="detail-item__value detail-item__value--essay" id="detailGPAExplText"></div>
+            </div>
+
+            <!-- Submission Timestamps -->
+            <div class="mt-xl">
+              <h3 class="card__title mb-lg">提出・更新履歴</h3>
+              <div class="data-table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>セクション</th>
+                      <th>初回提出</th>
+                      <th>最終更新</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Step 1: プロフィール</td>
+                      <td id="tsProfileFirst">—</td>
+                      <td id="tsProfileLast">—</td>
+                    </tr>
+                    <tr>
+                      <td>Step 2: 履修状況</td>
+                      <td id="tsReqFirst">—</td>
+                      <td id="tsReqLast">—</td>
+                    </tr>
+                    <tr>
+                      <td>Step 3: 書類・エッセイ</td>
+                      <td id="tsDocFirst">—</td>
+                      <td id="tsDocLast">—</td>
+                    </tr>
+                    <tr>
+                      <td>Step 4: 成績表</td>
+                      <td id="tsTranscriptFirst">—</td>
+                      <td id="tsTranscriptLast">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Activities -->
+            <div class="mt-xl">
+              <h3 class="card__title mb-lg">課外活動</h3>
+              <div id="detailActivities">
+                <div class="text-muted">データなし</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Requirement -->
+        <div class="tab-panel" id="tabRequirement">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+              <h3 class="card__title" style="margin:0;">CalGETC 履修状況</h3>
+              <div style="display:flex; gap:8px;">
+                <div id="detailTranscriptRequirement" style="display:inline-block;"></div>
+                <button class="btn btn--secondary btn--sm" id="btnCopyAIPrompt" type="button">
+                  🤖 AI判定用プロンプトをコピー
+                </button>
+              </div>
+            </div>
+            
+            <div id="detailCalGETC">
+              <div class="text-muted">データなし</div>
+            </div>
+
+            <!-- Missing Areas -->
+            <div id="detailMissingAreas" class="hidden mt-lg"></div>
+
+            <!-- Supplement -->
+            <div id="detailSupplement" class="hidden mt-lg">
+              <div class="detail-item__label">不足要件に関する補足コメント</div>
+              <div class="detail-item__value detail-item__value--essay" id="detailSupplementText"></div>
+            </div>
+
+            <div class="mt-xl">
+              <h3 class="card__title mb-lg">Major Preparation 科目</h3>
+              <div id="detailMajorPrep">
+                <div class="text-muted">データなし</div>
+              </div>
+            </div>
+            <div id="btnToggleCorrectionReqContainer" style="margin-top:24px;">
+              <button class="btn btn--secondary btn--sm" id="btnToggleCorrectionReq">📝 志願者に修正依頼をする</button>
+            </div>
+
+            <div id="containerReqCorrection" class="card mt-xl hidden" style="border: 1px solid var(--color-warning-border); background: var(--color-warning-bg);">
+              <h4 style="color:var(--color-warning); font-size:14px; margin-bottom:8px;">⚠️ 志願者への修正依頼（履修状況）</h4>
+              <div class="form-group">
+                <textarea class="form-textarea" id="feedbackReq" rows="3" placeholder="履修状況に関する不備や質問があれば記入してください。送信すると志願者側のステータスが「要対応」に変わります。"></textarea>
+              </div>
+              <div style="text-align:right; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn--ghost btn--sm" id="btnClearCorrectionReq" style="color:var(--text-muted);">クリア</button>
+                <button class="btn btn--secondary btn--sm" id="btnSendFeedbackReq">修正依頼を送信</button>
+              </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Tab: Document/Essay -->
+        <div class="tab-panel" id="tabDocument">
+          <div class="card mb-xl">
+            <h3 class="card__title mb-lg">志望理由</h3>
+            <div class="detail-item__value detail-item__value--essay" id="detailMotivation">
+              データなし
+            </div>
+          </div>
+
+          <div class="card mb-xl">
+            <h3 class="card__title mb-lg">設問回答</h3>
+            <div class="form-group__hint mb-md" style="font-size:12px;">
+              UC編入に向けて、自分の強みは何だと思いますか。また、現時点で不足している点や課題は何だと考えていますか。
+            </div>
+            <div class="detail-item__value detail-item__value--essay" id="detailSelfAnalysis">
+              データなし
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card__title mb-lg">PIQエッセイ</h3>
+            <div id="detailPIQPrompt" class="mb-md p-md" style="background:var(--bg-glass);border-left:4px solid var(--accent-start);padding:12px;border-radius:4px;font-size:13px;">
+              <strong id="detailPIQPromptTitle" style="color:var(--text-primary);display:block;margin-bottom:4px;"></strong>
+              <div id="detailPIQPromptText" style="color:var(--text-secondary);">プロンプト情報なし</div>
+            </div>
+            <div class="detail-item__value detail-item__value--essay" id="detailPIQ">
+              データなし
+            </div>
+            <div class="text-muted mt-sm" style="font-size:12px;" id="detailPIQWordCount"></div>
+          </div>
+
+          <!-- Document Feedback -->
+          <div id="btnToggleCorrectionDocContainer" style="margin-top:24px;">
+            <button class="btn btn--secondary btn--sm" id="btnToggleCorrectionDoc">📝 志願者に修正依頼をする</button>
+          </div>
+
+          <div id="containerDocCorrection" class="card mt-xl hidden" style="border: 1px solid var(--color-warning-border); background: var(--color-warning-bg);">
+            <h4 style="color:var(--color-warning); font-size:14px; margin-bottom:8px;">⚠️ 志願者への修正依頼（書類・エッセイ）</h4>
+            <div class="form-group">
+              <textarea class="form-textarea" id="feedbackDoc" rows="3" placeholder="書類内容やエッセイに関する不備があれば記入してください。"></textarea>
+            </div>
+            <div style="text-align:right; display:flex; gap:8px; justify-content:flex-end;">
+              <button class="btn btn--ghost btn--sm" id="btnClearCorrectionDoc" style="color:var(--text-muted);">クリア</button>
+              <button class="btn btn--secondary btn--sm" id="btnSendFeedbackDoc">修正依頼を送信</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: AI Evaluation -->
+        <div class="tab-panel" id="tabAI">
+          <div class="card">
+            <h3 class="card__title mb-lg">AI判定レポート（手動保存）</h3>
+            <p class="text-muted mb-md" style="font-size:13px;">
+              ChatGPT等で出力した判定結果（CalGETCや専攻要件のチェック結果）をここに貼り付けて保存できます。
+            </p>
+            <div class="form-group">
+              <textarea class="form-textarea" id="aiManualReport" rows="15" placeholder="AIの判定結果をここにペーストしてください"></textarea>
+            </div>
+            <div class="mt-md" style="text-align:right;">
+              <button class="btn btn--primary" id="saveAIReportBtn">レポートを保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Admin Notes -->
+        <div class="tab-panel" id="tabAdmin">
+          <div class="card">
+            <h3 class="card__title mb-lg">管理者メモ・評価</h3>
+            <div class="form-group">
+              <label class="form-group__label" for="adminNote">運営メモ</label>
+              <textarea class="form-textarea" id="adminNote" rows="6" placeholder="審査に関するメモ、共有事項等を記入してください"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-group__label" for="adminScore">手動評価スコア（0〜100）</label>
+              <input type="number" class="form-input" id="adminScore" min="0" max="100" placeholder="例: 85" style="max-width:200px;">
+            </div>
+            <div class="form-group">
+              <label class="form-group__label" for="adminDecision">最終判定コメント</label>
+              <textarea class="form-textarea" id="adminDecision" rows="3" placeholder="最終判定に関するコメント"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn--primary" id="saveAdminFeedback">💾 メモ・評価を保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Accepted Portal Admin -->
+        <div class="tab-panel" id="tabAccepted">
+          <div class="card mb-xl" style="border: 2px solid var(--accent-start);">
+            <h3 class="card__title mb-lg" style="color:var(--accent-start);">🎉 エッセイサポート採用者ポータル管理</h3>
+            <p class="text-muted mb-md">採用者ポータルに表示される情報を管理します。</p>
+            
+            <div class="form-group mt-lg">
+              <label class="form-group__label">エッセイドキュメント (Google Docs) URL</label>
+              <div class="flex gap-sm">
+                <input type="url" class="form-input" id="adminEssayUrl" placeholder="https://docs.google.com/..." style="flex:1;">
+                <button class="btn btn--primary" id="saveAdminEssayUrlBtn">URLを保存</button>
+              </div>
+              <div class="form-group__hint">※ここで設定したURLが、志願者側の採用者ポータルに表示されます。</div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border-default); margin:24px 0;">
+
+            <div class="detail-grid">
+              <!-- Progress Read-Only -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-group__label">志願者からのエッセイ進捗報告</label>
+                <div class="flex gap-md" style="background:var(--bg-card); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:16px;">
+                  <div>
+                    <div style="font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-muted);">下書き</div>
+                    <div id="adminViewProgressDraft" style="font-size:18px; font-weight:700;">0 / 4</div>
+                  </div>
+                  <div style="border-left:1px solid var(--border-default); padding-left:16px;">
+                    <div style="font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-muted);">日本語完成</div>
+                    <div id="adminViewProgressJa" style="font-size:18px; font-weight:700;">0 / 4</div>
+                  </div>
+                  <div style="border-left:1px solid var(--border-default); padding-left:16px;">
+                    <div style="font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-muted);">英語完成</div>
+                    <div id="adminViewProgressEn" style="font-size:18px; font-weight:700;">0 / 4</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Application Status Read-Only -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-group__label">出願完了・TAG報告</label>
+                <div style="background:var(--bg-card); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:16px;">
+                  <div style="font-size:12px; font-weight:600; margin-bottom:8px; color:var(--text-muted);">出願完了済みの大学</div>
+                  <div id="adminViewAppliedUnivs" style="font-size:14px; font-weight:500; min-height:20px; margin-bottom:16px;">なし</div>
+                  
+                  <div style="font-size:12px; font-weight:600; margin-bottom:8px; color:var(--text-muted); border-top:1px dashed var(--border-default); padding-top:12px;">TAG提出大学</div>
+                  <div id="adminViewTagUniv" style="font-size:14px; font-weight:500; min-height:20px;">未選択</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/data.js"></script>
+  <script type="module" src="js/admin-detail.js"></script>
+</body>
+</html>
